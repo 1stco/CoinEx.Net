@@ -18,6 +18,7 @@ using CoinEx.Net.Objects.Models;
 using CoinEx.Net.Objects.Models.Socket;
 using CoinEx.Net.Interfaces.Clients.SpotApi;
 using CoinEx.Net.Objects.Options;
+using CryptoExchange.Net.Converters;
 
 namespace CoinEx.Net.Clients.SpotApi
 {
@@ -107,11 +108,12 @@ namespace CoinEx.Net.Clients.SpotApi
         }
 
         /// <inheritdoc />
-        public async Task<CallResult<CoinExKline>> GetKlinesAsync(string symbol, KlineInterval interval)
+        public async Task<CallResult<IEnumerable<CoinExKline>>> GetKlinesAsync(string symbol, KlineInterval interval,DateTime startTime,DateTime endTime)
         {
             symbol.ValidateCoinExSymbol();
 
-            return await QueryAsync<CoinExKline>(new CoinExSocketRequest(NextId(), KlineSubject, QueryAction, symbol, interval.ToSeconds()), false).ConfigureAwait(false);
+            
+            return await QueryAsync<IEnumerable<CoinExKline>>(new CoinExSocketRequest(NextId(), KlineSubject, QueryAction, symbol, DateTimeConverter.ConvertToSeconds(startTime), DateTimeConverter.ConvertToSeconds(endTime), interval.ToSeconds()), false).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -175,7 +177,7 @@ namespace CoinEx.Net.Clients.SpotApi
         {
             symbol.ValidateCoinExSymbol();
             mergeDepth.ValidateIntBetween(nameof(mergeDepth), 0, 8);
-            limit.ValidateIntValues(nameof(limit), 5, 10, 20);
+            limit.ValidateIntValues(nameof(limit), 5, 10, 20,50);
 
             var internalHandler = new Action<DataEvent<JToken[]>>(data =>
             {
